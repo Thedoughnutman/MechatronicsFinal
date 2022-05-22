@@ -25,6 +25,6 @@ PORT 5 = QTI
 
 -------------------------
 
-PORT 11 = Initialization LED
-
 PORT 10 = Initialization Speaker
+
+PORT 11 = Initialization LED
