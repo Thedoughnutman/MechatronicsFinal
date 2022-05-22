@@ -23,6 +23,7 @@ PORT 4 = SPDT
 
 PORT 5 = QTI
 
+-------------------------
 
 PORT 11 = Initialization LED
 
