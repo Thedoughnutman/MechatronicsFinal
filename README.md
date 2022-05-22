@@ -18,8 +18,12 @@ Turn around to exit maze until QTI detectes the white tape then make the correct
 
 ### Ports
 PORT 3 = irDetector for remote
+
 PORT 4 = SPDT
+
 PORT 5 = QTI
 
+
 PORT 11 = Initialization LED
+
 PORT 10 = Initialization Speaker
