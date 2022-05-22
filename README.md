@@ -3,7 +3,9 @@ Robot uses servo to tension the long piece of wire in the front of the basket// 
 
 Once servo turns right, adds too much tension for anchor wire to hold causing the wire to get pulled out and the basket to quickly swing the other direction to make the ball drop out
 
-The anchor wire and servo needs to get reset after every use 
+The anchor wire and servo needs to get reset after every use
+
+Battery pack is on underside of BoeBot at 8v for the turns to use 19 // (x + 1 to 19)
 
 <img src = assets/BoeBot.jpg>
 
