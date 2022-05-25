@@ -9,6 +9,7 @@ TURNON CON 1 'Turn LED's on or off
 TURNOFF CON 0
 '---[END OF Initialization]-----------------------------------------------------------
 x VAR Word 'Variable for duration of servo movements // bit nib byte word
+y VAR Word 
 c VAR Word
 irDetector2 PIN 2
 NEG_EDGE CON 0
@@ -19,7 +20,7 @@ pulse2 VAR Word
 dataRemoteONE VAR byte
 dataRemoteTWO VAR byte
 timeToDischarge var Word
-counter var Word
+'counter var Word
 C7s CON 2218 ' ALSO D7b
 D7  CON	2349
 E7  CON	2637
@@ -31,21 +32,70 @@ spdt_switch VAR bit
 ' -----[ Main Routine ]---------------------------------------------------------------
 'NOTE: PBASIC HAS A MAX OF 500 LINES AND 4 NESTED GOSUBS  'p5 = qti// p4= spdt// p3//  p2 = 2nd irDetector for ir REMOTE// 
 Main:
+  'GOSUB TurnAroundR
   'GOSUB debukQTI
-  'gosub turnRight !!!!battery at 7.99 volts!!!!! = 19
+  'gosub turnRight '!!!battery at 7.99 volts!!!!! = 19
+  'GOSUB back
+  
+  
 GOSUB init
+GOSUB START
 GOSUB readRemote
  PAUSE 500 'to prevent the robot from moving forward while catching IR signals 
 GOSUB back 'this is the QTI code STARt
+
+
+
+
+
   IF dataRemoteONE + 1 = 3  THEN 
     GOSUB pickup3
     ENDIF
   IF dataRemoteONE + 1 = 2  THEN 
     GOSUB pickup2
     ENDIF
+  IF dataRemoteONE + 1 = 1  THEN 
+    GOSUB pickup1
+    ENDIF
+  IF dataRemoteONE + 1 = 4  THEN 
+    GOSUB pickup4
+    ENDIF
+    
   GOSUB FindStop
   GOSUB stopMove
   GOSUB NOKIA 'adds time to place ball
+  
+  IF dataRemoteONE + 1 = 1 AND dataRemoteTWO + 1 = 1 THEN   'goes into position and DUMPS after trash pickup
+      GOSUB from1pos1
+      ENDIF
+    IF dataRemoteONE + 1 = 1 AND dataRemoteTWO + 1 = 2 THEN   
+      GOSUB from1pos2
+      ENDIF
+    IF dataRemoteONE + 1 = 1 AND dataRemoteTWO + 1 = 3 THEN  
+      GOSUB from1pos3 'dump on spot
+      ENDIF
+    IF dataRemoteONE + 1 = 1 AND dataRemoteTWO + 1 = 4 THEN   
+      GOSUB from1pos4
+      ENDIF
+      
+      
+      IF dataRemoteONE + 1 = 4 AND dataRemoteTWO + 1 = 1 THEN   'goes into position and DUMPS after trash pickup
+      GOSUB from4pos1
+      ENDIF
+    IF dataRemoteONE + 1 = 4 AND dataRemoteTWO + 1 = 2 THEN   
+      GOSUB from4pos2
+      ENDIF
+    IF dataRemoteONE + 1 = 4 AND dataRemoteTWO + 1 = 3 THEN  
+      GOSUB from4pos3 'dump on spot
+      ENDIF
+    IF dataRemoteONE + 1 = 4 AND dataRemoteTWO + 1 = 4 THEN   
+      GOSUB from4pos4
+      ENDIF
+  
+  
+  
+  
+  
     IF dataRemoteONE + 1 = 3 AND dataRemoteTWO + 1 = 1 THEN   'goes into position and DUMPS after trash pickup
       GOSUB from3pos1
       ENDIF
@@ -83,8 +133,22 @@ GOSUB back 'this is the QTI code STARt
     IF dataRemoteTWO + 1 = 4 THEN   
       GOSUB back4
       ENDIF  
-  GOSUB TurnTiltR 'need to angle slightly to find the line back
+  'GOSUB TurnTiltR 'need to angle slightly to find the line back // the new if sequence solve this issue 
   GOSUB moveQTI
+  
+     IF dataRemoteTWO + 1 = 1 THEN   'RETURN RETURN RETURN from dumping  or is || ???
+      GOSUB turnRight
+      ENDIF
+    IF dataRemoteTWO + 1 = 2 THEN   
+      GOSUB turnRight
+      ENDIF
+    IF dataRemoteTWO + 1 = 3 THEN  
+      GOSUB turnLeft
+      ENDIF
+    IF dataRemoteTWO + 1 = 4 THEN   
+      GOSUB turnLeft
+      ENDIF  
+  
   GOSUB back
             DO
               GOSUB lightt
@@ -92,43 +156,26 @@ GOSUB back 'this is the QTI code STARt
 ' -----[ Sub Routines ]----------------------------------------------------------------
 init: 'Initialization -- NOTE THE LED IS ON PORT 11
   GOSUB lightt
-  FREQOUT 10, 1000, 2000
+  FREQOUT 10, 700, 2000
     INPUT 4
     GOSUB clock9 'back to startup position
+    GOSUB lightt
+    GOSUB lightt
     'GOSUB NOKIA 'soundcheck
 RETURN
 moveForward: 'A Fast Forward
-  FOR x = 1 TO 5:
+  FOR x = 1 TO 3:  '5
     PULSOUT 12, 850
     PULSOUT 13, 650
     PAUSE 20
   NEXT
 RETURN
-moveBackward: 'A Fast Backward
-  FOR x = 1 TO 7:
-    PULSOUT 12, 650
-    PULSOUT 13, 850
-    PAUSE 20
-  NEXT
-RETURN
-turnLeft: 'Tank Turn Version
-  FOR x = 1 TO 19:
-    PULSOUT 12, 650 
-    PULSOUT 13, 650 
-    PAUSE 20
-  NEXT
-RETURN
-turnRight: 'Tank Turn Version
-  FOR x = 1 TO 19:
-    PULSOUT 12, 850 
-    PULSOUT 13, 850 
-    PAUSE 20
-  NEXT
-RETURN
+
+'at bottom
 stopMove: 'Stops ALL Movement 
-  FOR x = 1 TO 20:
-    PULSOUT 12, 850 
-    PULSOUT 13, 650 
+  FOR x = 1 TO 5:
+    PULSOUT 12, 750 
+    PULSOUT 13, 750 '750
     PAUSE 20
   NEXT
 RETURN
@@ -144,6 +191,7 @@ readRemote:
     dataRemoteONE.BIT2 = pulse2.BIT9
 PAUSE 500 'Wont capture the same IR mesage twice
 GOSUB lightt ' lights up startup light once
+FREQOUT 10, 500, 3542 ' speaker sound
   DO
     PULSIN irDetector2, NEG_EDGE, startPulse
     PULSIN irDetector2, NEG_EDGE, pulse0
@@ -156,6 +204,8 @@ GOSUB lightt ' lights up startup light once
     PAUSE 500
     GOSUB lightt ' lights up startup light twice
     GOSUB lightt
+      FREQOUT 10, 500, 3542 ' speaker sound
+      pause 50
       FREQOUT 10, 500, 3542 ' speaker sound
       return
 FindLeft: 'Goes forward BUT ONCE there is a wall then turnLeft
@@ -186,18 +236,13 @@ FindStop:
 LOOP WHILE spdt_switch = 0
     gosub moveBackward
     pause 100
+    GOSUB stopMove
     RETURN
 TurnAroundR:
   GOSUB turnRight
   GOSUB turnRight
   RETURN
-TurnTiltR: 'need to angle slightly to find the line back
-  FOR x = 1 TO 2: 'from gosub turnRight
-    PULSOUT 12, 850 
-    PULSOUT 13, 850 
-    PAUSE 20
-  NEXT
-RETURN
+
 moveQTI:
 DO
    PULSOUT 12, 850
@@ -209,13 +254,66 @@ DO
   LOOP UNTIL timeToDischarge <= 220 'the white tape
 RETURN
 pickup2:
+  GOSUB lightt
+  GOSUB lightt
   GOSUB FindLeft
   GOSUB FindRight
   RETURN
 pickup3:
+  GOSUB lightt
+  GOSUB lightt
+  GOSUB lightt
   GOSUB FindRight
   GOSUB FindLeft
   RETURN
+pickup1:
+gosub lightt
+GOSUB FindLeft
+RETURN
+
+pickup4:
+  GOSUB lightt
+  GOSUB lightt
+  GOSUB lightt
+  GOSUB lightt
+  GOSUB FindRight
+  RETURN
+
+
+from1pos1: 'also include dumping DUMPclock3 BY FACING FORWARD
+  RETURN
+from1pos2:
+  GOSUB FindRight
+  GOSUB FindStop
+  RETURN
+from1pos3: ' stays in place and dumps
+  GOSUB TurnAroundR
+  GOSUB FindLeft
+  GOSUB FindStop
+  RETURN
+from1pos4:
+  GOSUB TurnAroundR
+  GOSUB FindStop
+  RETURN
+  
+  
+from4pos1: 'also include dumping DUMPclock3 BY FACING FORWARD
+  GOSUB TurnAroundR
+  GOSUB FindStop 'have a DUMPclock3 on the main program n`eed this for the chance that it is a 3 / 3
+  RETURN
+from4pos2:
+  GOSUB TurnAroundR
+  GOSUB FindRight
+  GOSUB FindStop
+  RETURN
+from4pos3: ' stays in place and dumps
+GOSUB FindLeft
+GOSUB FindStop
+  RETURN
+from4pos4:
+  RETURN
+
+
 from3pos1: 'also include dumping DUMPclock3 BY FACING FORWARD
   GOSUB TurnAroundR
   GOSUB FindRight
@@ -272,7 +370,7 @@ clock9: 'farthest left
 RETURN
 DUMPclock3: 'farthest right
  FOR c = 1 to 60 ' max 65535
-  PULSOUT 15, 250
+  PULSOUT 15, 350
   PAUSE 20
  NEXT
 RETURN
@@ -284,13 +382,13 @@ debukQTI:
    PAUSE 100
  LOOP
 turnLeftQTI: 'Tank turn versions
-  counter = counter + 1
+ ' counter = counter + 1
     PULSOUT 12, 650
     PULSOUT 13, 650
     PAUSE 20
   RETURN
 turnRightQTI:
-  counter = counter + 1
+ ' counter = counter + 1
     PULSOUT 12, 850
     PULSOUT 13, 850
     PAUSE 20
@@ -323,6 +421,20 @@ FREQOUT 10, 400, E7
 FREQOUT 10, 600, A7
   PAUSE 50
 RETURN
+START: 'SONG
+FREQOUT 10, 20, E7 'ED F# G# C#B D E BA C# E A
+  PAUSE 50
+FREQOUT 10, 20, D7
+  PAUSE 50
+FREQOUT 10, 40, F7s
+  PAUSE 50
+FREQOUT 10, 40, G7s
+  PAUSE 50
+FREQOUT 10, 20, C7s
+  PAUSE 50
+FREQOUT 10, 20, Be7
+  PAUSE 50
+  RETURN
 back:
 DO
    PULSOUT 12, 850
@@ -332,23 +444,54 @@ DO
    HIGH 5
      PAUSE 3
    RCTIME 5, 1, timeToDischarge  
-   IF (timeToDischarge <= 220) then '520
+   IF (timeToDischarge <= 500) then '520
      PAUSE 10 '20
      GOSUB turnLeftQTI 'Left
-   elseIF (timeToDischarge >= 600) then '900   
+   elseIF (timeToDischarge >= 900) then '900   
      PAUSE 10
      GOSUB turnLeftQTI 'Prevents a spinout
-   elseIF (timeToDischarge >= 300) then '600
+   elseIF (timeToDischarge >= 600) then '600
      PAUSE 10
      GOSUB turnRightQTI 'Right 
    ENDIF
-  LOOP UNTIL spdt_switch =  1
+  LOOP WHILE  spdt_switch = 0
   GOSUB moveBackward
-  pause 100
+  pause 400
+  gosub stopMove
   return
+
 lightt:
      initLED = TURNON 'Blinks the LED on
         PAUSE 100
       initLed = TURNOFF
         PAUSE 100
         return
+'12312367821903248578429147692108749210187492108475492018475932018 change this before running battery at 8.49 today
+'12312367821903248578429147692108749210187492108475492018475932018
+'12312367821903248578429147692108749210187492108475492018475932018
+turnLeft: 'Tank turn Version
+  FOR x = 1 TO 19:
+    PULSOUT 12, 650 
+    PULSOUT 13, 650 
+    PAUSE 20
+  NEXT
+  x = 0
+RETURN
+turnRight: 'Tank Turn Version
+  FOR y = 1 TO 19:
+    PULSOUT 12, 850 
+    PULSOUT 13, 850 
+    PAUSE 20
+  NEXT
+  y = 0
+RETURN
+'12312367821903248578429147692108749210187492108475492018475932018
+'12312367821903248578429147692108749210187492108475492018475932018
+'12312367821903248578429147692108749210187492108475492018475932018
+moveBackward: 'A Fast Backward
+  FOR x = 1 TO 20:
+    PULSOUT 12, 650
+    PULSOUT 13, 850
+    PAUSE 20
+  NEXT
+RETURN
